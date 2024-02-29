@@ -1,0 +1,14 @@
+/* heatmap.css */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+  
+  #healthHeatmap {
+    width: 800px;
+    height: 600px;
+    margin: 50px auto;
+    display: block;
+  }
+  

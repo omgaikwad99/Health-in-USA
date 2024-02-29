@@ -27,11 +27,13 @@ d3.csv("national_health_data.csv").then(function(data) {
         updateDistributionChart(data, selectedAttribute1, selectedAttribute2);
         updateScatterplot(data, selectedAttribute1, selectedAttribute2);
         updateChoroplethMaps(data, selectedAttribute1, selectedAttribute2);
+        createHeatmap(data, selectedAttribute1, selectedAttribute2)
     }
 });
 
 // Define color scale for choropleth maps
 var colorScaleChoropleth = d3.scaleSequential(d3.interpolateBlues);
+
 
 // Define color scale for other visualizations with a single color
 var singleColor = "#ff7f0e"; // Change the color code as needed
@@ -195,7 +197,6 @@ function updateSingleHistogram(data, attribute1, attribute2) {
         .call(brushHistogram);
 }
 
-// Function to update two side-by-side histograms
 function updateDualHistograms(data, attribute1, attribute2) {
     // Define the width and height of the chart
     var width = 1000;
@@ -286,7 +287,7 @@ function updateDualHistograms(data, attribute1, attribute2) {
             return width;
         })
         .attr("height", d => height - margin.bottom - yScale1(d.length))
-        .attr("fill", "steelblue")
+        .attr("fill", "red")
         .on("mouseover", function(event, d) {
             // Show tooltip
             tooltip.style("visibility", "visible")
@@ -312,7 +313,7 @@ function updateDualHistograms(data, attribute1, attribute2) {
             return width;
         })
         .attr("height", d => height - margin.bottom - yScale2(d.length))
-        .attr("fill", "steelblue")
+        .attr("fill", "green")
         .on("mouseover", function(event, d) {
         // Show tooltip
             tooltip.style("visibility", "visible")
@@ -368,15 +369,19 @@ function updateDualHistograms(data, attribute1, attribute2) {
     svg.append("g")
         .attr("class", "brush")
         .call(brushHistogram2);
+    }
 
-
-}
 
 
 // Function to update scatterplot
 function updateScatterplot(data, attribute1, attribute2) {
+
     // Clear previous scatterplot
     d3.select("#scatterplot").selectAll("*").remove();
+    var attributes = Object.keys(data[0]).filter(key => key !== 'cnty_fips' && key !== 'display_name');
+    var colorScale = d3.scaleOrdinal()
+        .domain(attributes)
+        .range(d3.schemeCategory10)
 
     // Define the width and height of the scatterplot
     var width = 1000;
@@ -413,11 +418,14 @@ function updateScatterplot(data, attribute1, attribute2) {
         .attr("cx", d => xScale(parseFloat(d[attribute1])))
         .attr("cy", d => yScale(parseFloat(d[attribute2])))
         .attr("r", 5)
-        .attr("fill", singleColor)
+        .attr("fill", d => colorScale(Object.keys(d).find(key => d[key] === d[attribute1] || d[key] === d[attribute2])))
+        .attr("stroke", "black")
+        .attr("stroke-width", 1)
+
         .on("mouseover", function(event, d) {
             // Show tooltip with detail-on-demand interactions
             tooltip.style("visibility", "visible")
-                .html("Attribute 1: " + d[attribute1] + "<br>Attribute 2: " + d[attribute2] + "<br>County: " + d.County)
+                .html("Attribute 1: " + d[attribute1] + "<br>Attribute 2: " + d[attribute2] + "<br>County: " + d.display_name)
                 .style("left", (event.pageX) + "px")
                 .style("top", (event.pageY - 28) + "px");
         })
@@ -521,10 +529,10 @@ function updateChoroplethMaps(data, attribute1, attribute2) {
         drawCounties(svg2, usCounties, data, attribute2, colorScale2, path);
 
         // Create legend for map 1
-        createLegend(svg1, colorScale1, width, height, attribute1);
+        createLegend(svg1, colorScale1, width, height, attribute1, true);
 
         // Create legend for map 2
-        createLegend(svg2, colorScale2, width, height, attribute2);
+        createLegend(svg2, colorScale2, width, height, attribute2, false);
 
         // Add brushing functionality
         addBrushing(svg1, data, attribute1, colorScale1, svg2, attribute2, colorScale2);
@@ -628,8 +636,7 @@ function updateChoroplethMaps(data, attribute1, attribute2) {
     }
 }
 
-// Function to create legend
-function createLegend(svg, colorScale, width, height, attribute) {
+function createLegend(svg, colorScale, width, height, attribute, isBlueScale) {
     var legend = svg.append("g")
         .attr("class", "legend");
 
@@ -640,61 +647,58 @@ function createLegend(svg, colorScale, width, height, attribute) {
         .attr("y", 20) // Adjust y-coordinate as needed
         .text("Attribute: " + attribute);
 
+    // Create a linear gradient for the legend
+    var gradient = legend.append("defs")
+        .append("linearGradient")
+        .attr("id", isBlueScale ? "legendGradientBlue" : "legendGradientRed")
+        .attr("x1", "0%")
+        .attr("x2", "100%")
+        .attr("y1", "0%")
+        .attr("y2", "0%");
+
+    // Calculate the stop positions for the gradient
+    var domain = colorScale.domain();
+    var stopPositions = domain.map(function(d, i) {
+        return i / (domain.length - 1) * 100 + "%";
+    });
+
+    // Add color stops to the gradient
+    gradient.selectAll("stop")
+        .data(domain)
+        .enter().append("stop")
+        .attr("offset", function(d, i) {
+            return stopPositions[i];
+        })
+        .attr("stop-color", function(d) {
+            return colorScale(d);
+        });
+
+    // Add a rectangle filled with the gradient
+    legend.append("rect")
+        .attr("x", 10)
+        .attr("y", 30)
+        .attr("width", 200) // Adjust width as needed
+        .attr("height", 20)
+        .style("fill", isBlueScale ? "url(#legendGradientBlue)" : "url(#legendGradientRed)");
+
+    // Add text labels for each value
+    legend.selectAll(".legend-label")
+        .data(domain)
+        .enter().append("text")
+        .attr("class", "legend-label")
+        .attr("x", function(d, i) {
+            return 10 + i * (200 / (domain.length - 1));
+        })
+        .attr("y", 60) // Adjust y-coordinate as needed
+        .text(function(d) {
+            return d.toFixed(2); // Adjust formatting as needed
+        });
+
     // Adjust positioning based on legend width and height
     var legendWidth = legend.node().getBoundingClientRect().width;
     var legendHeight = legend.node().getBoundingClientRect().height;
     legend.attr("transform", "translate(" + (width - legendWidth - 20) + "," + (height - legendHeight - 20) + ")");
 }
-
-
-
-
-
-/* Function to create legend
-function createLegend(svg, colorScale, width, height) {
-    var legend = svg.append("g")
-        .attr("class", "legend");
-
-    var legendRectSize = 18;
-    var legendSpacing = 4;
-
-    // Get the range values of the color scale
-    var rangeValues = colorScale.range();
-
-    // Calculate the step size for the legend items
-    var step = (colorScale.domain()[1] - colorScale.domain()[0]) / rangeValues.length;
-
-    var legendItems = legend.selectAll(".legend-item")
-        .data(rangeValues)
-        .enter()
-        .append("g")
-        .attr("class", "legend-item")
-        .attr("transform", function(d, i) {
-            var vertOffset = i * (legendRectSize + legendSpacing) + 10; // Adjust vertical offset
-            return "translate(0," + vertOffset + ")";
-        });
-
-    legendItems.append("rect")
-        .attr("width", legendRectSize)
-        .attr("height", legendRectSize)
-        .style("fill", function(d) { return d; }) // Use the color directly
-        .style("stroke", function(d) { return d; }); // Use the color directly
-
-    legendItems.append("text")
-        .attr("x", legendRectSize + legendSpacing)
-        .attr("y", legendRectSize - legendSpacing)
-        .text(function(d, i) { 
-            // Calculate the domain value for each legend item
-            var domainValue = (colorScale.domain()[0] + i * step).toFixed(2);
-            return domainValue; 
-        });
-
-    // Adjust positioning based on legend height
-    var legendHeight = rangeValues.length * (legendRectSize + legendSpacing) + 20; // Extra padding
-    var legendWidth = legend.node().getBoundingClientRect().width;
-    legend.attr("transform", "translate(" + (width - legendWidth - 20) + "," + (height - legendHeight) + ")");
-}
-*/
 
 
 // Create tooltip
@@ -707,3 +711,5 @@ var tooltip = d3.select("body").append("div")
     .style("padding", "5px")
     .style("border", "1px solid #ccc")
     .style("border-radius", "5px");
+
+

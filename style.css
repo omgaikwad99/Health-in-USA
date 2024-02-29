@@ -63,3 +63,14 @@ header {
     width: 100%;
     height: 600px; /* Adjust height of the maps */
 }
+
+/* Heatmap */
+#heatmap-section {
+    flex-basis: 100%;
+    text-align: center;
+}
+
+#heatmap {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}

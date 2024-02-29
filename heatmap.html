@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>US County Health Heatmap</title>
+  <!-- Include CSS -->
+  <link rel="stylesheet" href="heatmap.css">
+  <!-- Include Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <canvas id="healthHeatmap"></canvas>
+  <script>
+    // Load data
+    fetch('national_health_data.csv')
+      .then(response => response.text())
+      .then(data => {
+        const rows = data.split('\n').map(row => row.split(','));
+
+        // Remove header row
+        const header = rows.shift();
+
+        // Get the data attributes
+        const attributes = header.slice(1); // Exclude 'fips'
+
+        // Prepare data for Chart.js
+        const chartData = {
+          labels: rows.map(row => row[0]), // County names
+          datasets: attributes.map((attribute, index) => ({
+            label: attribute,
+            data: rows.map(row => ({ x: index, y: parseFloat(row[index + 1]) })), // Skip county name (index + 1)
+            backgroundColor: 'rgba(255, 99, 132, 0.8)', // You can customize colors
+          }))
+        };
+
+        // Create heatmap chart
+        const ctx = document.getElementById('healthHeatmap').getContext('2d');
+        new Chart(ctx, {
+          type: 'scatter',
+          data: {
+            datasets: chartData.datasets,
+          },
+          options: {
+            scales: {
+              x: {
+                display: false
+              },
+              y: {
+                scaleLabel: {
+                  display: true,
+                  labelString: 'Attributes'
+                }
+              }
+            },
+            title: {
+              display: true,
+              text: 'US County Health Heatmap'
+            }
+          }
+        });
+      })
+      .catch(error => console.error('Error loading data:', error));
+  </script>
+</body>
+</html>
