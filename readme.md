@@ -39,6 +39,6 @@ The data used in this project is sourced from the US Heart and Stroke Atlas. The
 A 2-3 minute demo video showcasing the application in action has been recorded. The video provides an overview of the project components, including attribute selection, distribution comparison, correlation analysis, and spatial distribution visualization. It explains how users can interact with the application to explore different health-related attributes and discover insights into county-level health factors across the USA.
 
 To view the demo video, please download the attached video file:
-- [Demo Video](link-to-attached-video)
+- [Demo Video](https://onedrive.live.com/?cid=A387632E9BBCCF9A&id=A387632E9BBCCF9A%212764&parId=A387632E9BBCCF9A%212763&o=OneUp)
 
 Note: If you cannot access the demo video, please feel free to [contact me via email](mailto:gaikwaot@mail.uc.edu) at gaikwaot@mail.uc.edu.
