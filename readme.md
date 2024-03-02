@@ -1,5 +1,5 @@
 # US Heart and Stroke Atlas Visualization
-###Author: Om Gaikwad
+### Author: Om Gaikwad
 
 ## Motivation
 The motivation behind this application is to provide a user-friendly and interactive tool for exploring factors that impact the health of counties in the USA. By visualizing various attributes such as economics, environment, behavioral factors, demographics, healthcare, and health outcomes, users can gain insights into the relationships between these factors and understand their spatial distribution across the country.
